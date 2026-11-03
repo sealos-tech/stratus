@@ -1,11 +1,13 @@
 # Stratus
 
+English | [简体中文](README.zh-CN.md)
+
 A status page for multi-region services that runs entirely on Cloudflare Workers. Every minute it
 loads the pages of each zone from a Cloudflare location near that zone, keeps 90 days of
 per-minute history, posts to your team's chat when something breaks, and lets visitors subscribe
 to updates.
 
-![Status page](docs/screenshots/home.png)
+![Status page](docs/screenshots/en/home.png)
 
 ## Features
 
@@ -33,7 +35,7 @@ to updates.
 
 | Zone expanded | Admin settings |
 | --- | --- |
-| ![Zone expanded](docs/screenshots/zone-expanded.png) | ![Admin settings](docs/screenshots/admin-settings.png) |
+| ![Zone expanded](docs/screenshots/en/zone-expanded.png) | ![Admin settings](docs/screenshots/en/admin-settings.png) |
 
 ## Deploy
 

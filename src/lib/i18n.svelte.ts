@@ -58,7 +58,7 @@ const messages = {
     notFound: 'Page not found',
     loadFailed: 'Failed to load',
     retry: 'Retry',
-    language: '中文',
+    languageMenu: 'Language',
     light: 'Light',
     dark: 'Dark',
     subscribeTitle: 'Subscribe to status updates',
@@ -130,7 +130,7 @@ const messages = {
     notFound: '找不到这个页面',
     loadFailed: '加载失败',
     retry: '重试',
-    language: 'English',
+    languageMenu: '语言',
     light: '浅色',
     dark: '深色',
     // Subscribe dialog

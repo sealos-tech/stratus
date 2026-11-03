@@ -206,9 +206,9 @@
                     <span class={hint}>ID: <code>{zone.id}</code> {newZoneIds.has(zone.id) ? L('(from the domain, fixed once saved)', '（按域名生成，保存后固定）') : L('(history is stored under it, cannot change)', '（历史数据按它保存，不可修改）')}</span>
                   </label>
                   <label class="flex flex-col gap-1.5"><span class={label}>{L('Name (English)', '名称（英文）')}</span><input class={input} bind:value={zone.name.en} placeholder="Tokyo" data-testid="zone-name-en" /></label>
-                  <label class="flex flex-col gap-1.5"><span class={label}>{L('Name (Chinese)', '名称（中文）')}</span><input class={input} bind:value={zone.name.zh} placeholder="东京" data-testid="zone-name-zh" /></label>
+                  <label class="flex flex-col gap-1.5"><span class={label}>{L('Name (Chinese)', '名称（中文）')}</span><input class={input} bind:value={zone.name.zh} placeholder={L('Optional', '东京')} data-testid="zone-name-zh" /></label>
                   <label class="flex flex-col gap-1.5"><span class={label}>{L('Location (English)', '位置（英文）')}</span><input class={input} bind:value={zone.location.en} placeholder="Tokyo, Japan" /></label>
-                  <label class="flex flex-col gap-1.5"><span class={label}>{L('Location (Chinese)', '位置（中文）')}</span><input class={input} bind:value={zone.location.zh} placeholder="日本 · 东京" /></label>
+                  <label class="flex flex-col gap-1.5"><span class={label}>{L('Location (Chinese)', '位置（中文）')}</span><input class={input} bind:value={zone.location.zh} placeholder={L('Optional', '日本 · 东京')} /></label>
                   <label class="flex flex-col gap-1.5"><span class={label}>{L('Country code', '国家代码')}</span><input class={input} bind:value={zone.country} maxlength="2" placeholder="JP" /></label>
                   <label class="flex flex-col gap-1.5"><span class={label}>{L('Check from', '探测地区')}</span>
                     <select class={input} bind:value={zone.probe} data-testid="zone-probe">

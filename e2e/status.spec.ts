@@ -327,9 +327,11 @@ test.describe.serial('Stratus', () => {
     await page.goto('/')
     // The maintenance of the previous test is still running.
     await expect(page.getByTestId('status-banner')).toContainText('Scheduled maintenance in progress')
-    await page.getByTestId('lang-toggle').click()
+    await page.getByTestId('lang-menu').click()
+    await page.getByTestId('lang-zh').click()
     await expect(page.getByTestId('system-status')).toContainText('系统状态')
-    await page.getByTestId('lang-toggle').click()
+    await page.getByTestId('lang-menu').click()
+    await page.getByTestId('lang-en').click()
     await expect(page.getByTestId('system-status')).toContainText('System status')
     await page.getByTestId('theme-toggle').click()
     await expect(page.locator('html')).toHaveClass(/dark/)
@@ -422,26 +424,51 @@ test.describe.serial('Stratus', () => {
     expect(card.body.sign).toMatch(/^[A-Za-z0-9+/]+=*$/)
   })
 
-  test('README screenshots', async ({ browser }) => {
-    mkdirSync('docs/screenshots', { recursive: true })
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2, locale: 'en-US' })
-    await page.addInitScript(() => {
-      localStorage.setItem('lang', 'en')
-      localStorage.setItem('theme', 'light')
-      localStorage.removeItem('expandedZones')
-    })
-    await page.goto('/')
-    await expect(page.getByTestId('zone')).toHaveCount(3)
-    await page.screenshot({ path: 'docs/screenshots/home.png' })
-    await page.locator('[data-zone="e2e-a"] [data-testid="zone-toggle"]').click()
-    await page.locator('[data-zone="e2e-a"] [data-monitor="beta"] rect[data-severity="major"], [data-zone="e2e-a"] [data-monitor="beta"] rect[data-severity="partial"]').last().hover()
-    await expect(page.getByTestId('bar-tooltip')).toBeVisible()
-    await page.screenshot({ path: 'docs/screenshots/zone-expanded.png' })
-    await page.goto(`/admin?p=${TOKEN}#settings`)
-    await page.locator('[data-zone="e2e-c"] [data-testid="settings-zone-toggle"]').click()
-    await expect(page.locator('[data-zone="e2e-c"] [data-testid="zone-domain"]')).toBeVisible()
-    await page.screenshot({ path: 'docs/screenshots/admin-settings.png' })
-    await page.close()
+  test('README screenshots, English and Chinese', async ({ browser }) => {
+    // Visible text with any CJK character; the English set must have none.
+    const cjk = (page: Page) =>
+      page.evaluate(() => {
+        const found: string[] = []
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const el = n.parentElement
+          if (!el || !el.checkVisibility()) continue
+          if (/[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/.test(n.textContent ?? '')) found.push((n.textContent ?? '').trim())
+        }
+        for (const el of document.querySelectorAll<HTMLInputElement>('input[placeholder], textarea[placeholder]')) {
+          if (el.checkVisibility() && /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/.test(el.placeholder)) found.push(el.placeholder)
+        }
+        return found
+      })
+
+    for (const lang of ['en', 'zh'] as const) {
+      const dir = `docs/screenshots/${lang}`
+      mkdirSync(dir, { recursive: true })
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2, locale: lang === 'en' ? 'en-US' : 'zh-CN' })
+      await page.addInitScript((l) => {
+        localStorage.setItem('lang', l)
+        localStorage.setItem('theme', 'light')
+        localStorage.removeItem('expandedZones')
+      }, lang)
+      const capture = async (name: string) => {
+        await page.waitForTimeout(300)
+        if (lang === 'en') expect(await cjk(page), `${name} shows Chinese text`).toEqual([])
+        await page.screenshot({ path: `${dir}/${name}.png` })
+      }
+
+      await page.goto('/')
+      await expect(page.getByTestId('zone')).toHaveCount(3)
+      await capture('home')
+      await page.locator('[data-zone="e2e-a"] [data-testid="zone-toggle"]').click()
+      await page.locator('[data-zone="e2e-a"] [data-monitor="beta"] rect[data-severity="major"], [data-zone="e2e-a"] [data-monitor="beta"] rect[data-severity="partial"]').last().hover()
+      await expect(page.getByTestId('bar-tooltip')).toBeVisible()
+      await capture('zone-expanded')
+      await page.goto(`/admin?p=${TOKEN}#settings`)
+      await page.locator('[data-zone="e2e-c"] [data-testid="settings-zone-toggle"]').click()
+      await expect(page.locator('[data-zone="e2e-c"] [data-testid="zone-domain"]')).toBeVisible()
+      await capture('admin-settings')
+      await page.close()
+    }
   })
 
   test('admin API rejects bad input', async ({ request }) => {
