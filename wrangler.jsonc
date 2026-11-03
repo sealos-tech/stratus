@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stratus",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/unsubscribe"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      // `npx wrangler d1 create stratus` prints the id to put here.
+      "database_name": "stratus",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "PROBER", "class_name": "Prober" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Prober"] }],
+  "triggers": {
+    // Checks every minute; daily cleanup at 03:17 UTC.
+    "crons": ["* * * * *", "17 3 * * *"]
+  },
+  // The only thing to set at deploy time is the admin link's password ("p"):
+  //   npx wrangler secret put ADMIN_TOKEN     (at least 16 characters)
+  // The console then opens at https://<your domain>/admin?p=<ADMIN_TOKEN>, and everything else
+  // (zones, pages, Feishu, email, check parameters) is configured there.
+  "observability": { "enabled": true }
+}

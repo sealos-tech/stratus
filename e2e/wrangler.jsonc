@@ -1,0 +1,27 @@
+// Worker config for the E2E suite. Zones, the Feishu hook and the grace period are not here:
+// e2e/seed.mjs saves them as admin settings in D1, the same way they are configured in production.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "stratus",
+  "main": "../worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/unsubscribe"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sealos-status-e2e",
+      "database_id": "00000000-0000-0000-0000-00000000e2e0",
+      "migrations_dir": "../migrations"
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "PROBER", "class_name": "Prober" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Prober"] }],
+  "vars": {
+    "ADMIN_TOKEN": "e2e-admin-token-0123456789",
+    "API_CACHE_SECONDS": "0"
+  }
+}

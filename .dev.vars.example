@@ -1,0 +1,4 @@
+# Local development. Copy to .dev.vars.
+# The admin console opens at http://localhost:5173/admin?p=<ADMIN_TOKEN> (16+ characters).
+ADMIN_TOKEN=change-me-to-a-long-random-string
+API_CACHE_SECONDS=0
