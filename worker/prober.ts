@@ -90,21 +90,41 @@ async function getColo(): Promise<string | null> {
   return coloCache
 }
 
-/** Checks every page; a failed page is retried once so a single dropped connection is not an outage. */
-export async function probeZone(monitors: MonitorConfig[], timeoutMs: number): Promise<ZoneProbe> {
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Checks every page. A failed page is retried once so a single dropped connection is not an
+ * outage. A page slower than `degradedMs` is measured again and the faster result is kept: a
+ * request that stalls on a long path says nothing about the page, and a page that is really slow
+ * stays slow.
+ */
+export async function probeZone(monitors: MonitorConfig[], timeoutMs: number, degradedMs: number): Promise<ZoneProbe> {
   const check = (m: MonitorConfig) => checkPage(m, timeoutMs)
   const [colo, results] = await Promise.all([getColo(), pool(monitors, CONCURRENCY, check)])
+
   const failed = monitors.filter((_, i) => !results[i].ok)
   if (failed.length > 0) {
-    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+    await delay(RETRY_DELAY_MS)
     const retried = await pool(failed, CONCURRENCY, check)
     for (const r of retried) results[monitors.findIndex((m) => m.id === r.id)] = r
+  }
+
+  const slow = new Set(results.filter((r) => r.ok && r.latency > degradedMs).map((r) => r.id))
+  if (slow.size > 0) {
+    await delay(RETRY_DELAY_MS)
+    const retried = await pool(monitors.filter((m) => slow.has(m.id)), CONCURRENCY, check)
+    for (const r of retried) {
+      // The page answered once already, so a failed re-check is noise, not an outage.
+      if (!r.ok) continue
+      const i = results.findIndex((x) => x.id === r.id)
+      if (r.latency < results[i].latency) results[i] = r
+    }
   }
   return { colo, results }
 }
 
 export class Prober extends DurableObject<Env> {
-  async probe(monitors: MonitorConfig[], timeoutMs: number): Promise<ZoneProbe> {
-    return probeZone(monitors, timeoutMs)
+  async probe(monitors: MonitorConfig[], timeoutMs: number, degradedMs: number): Promise<ZoneProbe> {
+    return probeZone(monitors, timeoutMs, degradedMs)
   }
 }

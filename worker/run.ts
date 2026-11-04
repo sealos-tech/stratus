@@ -12,13 +12,13 @@ import { addSample, emptyTotals, key, loadState, pruneState, saveStateStatement 
 const EMPTY_MINUTES = '.'.repeat(1440)
 const EMPTY_LATENCIES = '0000'.repeat(1440)
 
-async function probeAll(env: Env, zones: ZoneConfig[], timeoutMs: number): Promise<ZoneProbe[]> {
+async function probeAll(env: Env, zones: ZoneConfig[], timeoutMs: number, degradedMs: number): Promise<ZoneProbe[]> {
   return Promise.all(
     zones.map(async (zone) => {
       try {
         // The location hint only applies when the object is first created, so it is part of the name.
         const stub = env.PROBER.get(env.PROBER.idFromName(`${zone.id}@${zone.probe}`), { locationHint: zone.probe })
-        return await stub.probe(zone.monitors, timeoutMs)
+        return await stub.probe(zone.monitors, timeoutMs, degradedMs)
       } catch (e) {
         // A probe that could not run says nothing about the zone: record nothing rather than an outage.
         console.error(`probe of zone ${zone.id} failed`, e)
@@ -34,7 +34,7 @@ export async function runChecks(env: Env, scheduledTime: number): Promise<void> 
   const { day, minute } = localParts(now, config.site.timezone)
 
   const [probes, state, open, maintenance] = await Promise.all([
-    probeAll(env, config.zones, config.probe.timeoutMs),
+    probeAll(env, config.zones, config.probe.timeoutMs, config.probe.degradedMs),
     loadState(env, config, now),
     env.DB.prepare(`SELECT id, zone, monitor, start_ts, end_ts, error, errors, notified FROM outages WHERE end_ts IS NULL`)
       .all<OutageRow>()

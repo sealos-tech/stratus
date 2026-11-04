@@ -20,7 +20,8 @@ to updates.
   Chinese.
 - **Outage detection.** A page that keeps failing opens an outage. Once it has lasted longer than
   the grace period (3 minutes by default) it is announced, and so is the recovery. Short blips
-  stay quiet.
+  stay quiet. A page slower than the slow threshold is checked again and the faster result counts,
+  and a day only turns yellow when at least 1% of its checks were slow.
 - **Incidents and maintenance.** Publish incidents (investigating → identified → monitoring →
   resolved) and scheduled maintenance from the admin console, for whole zones or single pages.
   During a maintenance window, failed checks of the affected pages count as maintenance, not
@@ -88,7 +89,7 @@ Everything below is edited in **Admin → Settings**. The defaults in
 | Notify after (minutes) | How long a page must stay down before a detected outage is announced. `0` announces at once. |
 | Resend API key / sender | With both set, visitors can subscribe by email. |
 | Site title, URL, time zone, default language | The URL is used for links in notifications and emails. The time zone decides where a day starts in the history bars. The default language is used for team notifications and for visitors whose browser language is not supported. |
-| Check timeout / slow threshold | A check fails after the timeout; a page slower than the threshold counts as slow. |
+| Check timeout / slow threshold | A check fails after the timeout; a page slower than the threshold counts as slow, after a second check confirms it. |
 
 Display names are entered in English and, optionally, Chinese; an empty translation falls back to
 the English name.

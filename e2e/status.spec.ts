@@ -72,6 +72,17 @@ test.describe.serial('Stratus', () => {
     await shot(page, '01-home-operational')
   })
 
+  test('a slow check is measured again, so one stalled request is not a slow page', async ({ request }) => {
+    await request.post(`${MOCK}/control`, { data: { down: [], slowOnce: ['alpha'] } })
+    await round(request)
+
+    const summary = await (await request.get('/api/summary')).json()
+    const alpha = summary.zones.find((z: any) => z.id === 'e2e-a').monitors.find((m: any) => m.id === 'alpha')
+    // The first request took 6 s; the re-check was fast, so the faster result counts.
+    expect(alpha.status).toBe('up')
+    expect(alpha.latency).toBeLessThan(5000)
+  })
+
   test('zone expands to its pages; day bar tooltip and minute detail', async ({ page }) => {
     await page.goto('/')
     const zone = page.locator('[data-zone="e2e-a"]')
@@ -106,6 +117,17 @@ test.describe.serial('Stratus', () => {
     // 201 failed minutes of 1440 → 86.04% (floored to 2 decimals).
     await expect(dialog.getByTestId('day-uptime')).toHaveText('86.04%')
     await shot(page, '04-day-detail', false)
+  })
+
+  test('a few slow minutes do not turn the whole day yellow', async ({ page }) => {
+    await page.goto('/')
+    const zone = page.locator('[data-zone="e2e-a"]')
+    await zone.getByTestId('zone-toggle').click()
+
+    // Seed gives alpha three slow minutes in one day (0.2%): noise, so the bar stays green.
+    await expect(zone.locator('[data-monitor="alpha"] rect[data-severity="degraded"]')).toHaveCount(0)
+    // Gamma was slow for 61 minutes that day (4.2%): a slow day, so the bar is yellow.
+    await expect(page.locator('[data-zone="e2e-b"] rect[data-severity="degraded"]')).toHaveCount(1)
   })
 
   test('outage: detected, announced to the team after the grace period, then recovery', async ({ page, request }) => {

@@ -35,12 +35,20 @@ export function sumDays(list: DayCounts[]): Counts {
   return c
 }
 
+/**
+ * Share of a day's checks that must be slow before the day itself counts as slow. One slow minute
+ * out of 1,440 is noise; a day that is really slow stays slow for far longer than that.
+ */
+export const SLOW_DAY_SHARE = 0.01
+/** Slow minutes a day needs before it can be marked slow, so a blip early in the day does not count. */
+export const SLOW_DAY_MINUTES = 3
+
 /** Severity measured by the probes: any failed minute marks the day, 5%+ of the day is a major outage. */
 export function measuredSeverity(c: Counts): Severity {
   const all = total(c)
   if (all === 0) return 'nodata'
   if (c.down > 0) return c.down / all >= 0.05 ? 'major' : 'partial'
-  if (c.degraded > 0) return 'degraded'
+  if (c.degraded >= SLOW_DAY_MINUTES && c.degraded / all >= SLOW_DAY_SHARE) return 'degraded'
   if (c.maintenance > 0) return 'maintenance'
   return 'up'
 }

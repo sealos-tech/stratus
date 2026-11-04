@@ -38,7 +38,8 @@ const FAILURES = {
   'e2e-a/beta': [[40, 120, 150], [5, 900, 1100]],
   'e2e-b/gamma': [[25, 300, 330], [3, 60, 66]],
 }
-const SLOW = { 'e2e-b/gamma': [[60, 700, 760]] }
+// Slow minutes per page: gamma gets a real slow day, alpha only three minutes of noise.
+const SLOW = { 'e2e-b/gamma': [[60, 700, 760]], 'e2e-a/alpha': [[30, 700, 702]] }
 
 const rows = []
 for (const page of ['e2e-a/alpha', 'e2e-a/beta', 'e2e-b/gamma']) {
